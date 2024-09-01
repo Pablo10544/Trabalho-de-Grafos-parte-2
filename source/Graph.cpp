@@ -254,7 +254,7 @@ float total =0;
 vector<Edge*> Graph::AlgoritmoGulosoRandomizadoAdaptativo(float alfaVetor[],int numeroIteracoes,int bloco,int tamanho){
  auto start = std::chrono::system_clock::now();
   vector<MGGPPAux> melhorSolucao;
-  int valorMelhorSolução=infinito;
+  int valorMelhorSolucao=infinito;
   int contadorLoop =0;
   float alfaEscolhido;
   float probabilidades[tamanho];
@@ -277,7 +277,7 @@ while(contadorLoop<numeroIteracoes){
             for (size_t i = 0; i < tamanho; i++)
             {
                 // cout<<"valor melhor solução:"<<valorMelhorSolução<<"media"<<medias[i]<<"tamanho"<<tamanho;
-               probabilidades[i] = ((float)valorMelhorSolução/medias[i])/(float)tamanho;
+               probabilidades[i] = ((float)valorMelhorSolucao/medias[i])/(float)tamanho;
                 // cout<<"probabilidade:"<<probabilidades[i]<<"size"<<tamanho;
 
             }    
@@ -404,8 +404,8 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
       }
         medias[indexAlfa]=(medias[indexAlfa]*contadoresMedias[indexAlfa]+ gapFinal)/(contadoresMedias[indexAlfa]+1);
         contadoresMedias[indexAlfa]++;
-        if(gapFinal<valorMelhorSolução){
-            valorMelhorSolução = gapFinal;
+        if(gapFinal<valorMelhorSolucao){
+            valorMelhorSolucao = gapFinal;
             melhorSolucao = x;
         }
         
@@ -421,7 +421,7 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
             melhorGapFinal+=melhorSolucao[i].gap;
            // cout<<"gap"<<x[i].gap<<endl;
       }
-    cout<<"Melhor gap encontrado:"<<melhorGapFinal<<"-"<<valorMelhorSolução;
+    cout<<"Melhor gap encontrado:"<<valorMelhorSolucao;
     cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s\n";
     return melhorSolucao[0].edges;
 }
