@@ -72,14 +72,13 @@ public:
     void exportar(vector<Edge*> arestas, ofstream& arquivo_saida);
     void lista_adjacencia(ofstream& arquivo_saida);
 
-    void AlgoritmoGuloso();
+    vector<Edge*>  AlgoritmoGuloso();
     bool isAdjacent(size_t first_id,size_t second_id);
 bool aresta_no_vetorIdaVolta(vector<Edge*>& vetor, Edge* aresta);
 
     int determinar_gap_aresta(Edge* aresta);
     bool compararArestas(const Edge* a, const Edge* b);
     bool arestas_adj(vector<Edge*> arestas, Edge* alvo);
-    vector<Edge*> constructive_proc();
 vector<Edge*>getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visitedEdges) ;
 private:
     size_t _number_of_nodes;

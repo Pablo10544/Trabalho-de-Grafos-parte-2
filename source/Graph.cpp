@@ -105,14 +105,15 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
                         idPrimeiroNo = stoi(primeiroVertice);
                         primeiroVertice="";
                         inicioSegundoCaracter = true;
-                        cout<<"Primeiro caracter"<<idPrimeiroNo;
+                      //  cout<<"Primeiro caracter"<<idPrimeiroNo;
                         continue;
                     }else if(i==')'){
                         inicioSegundoCaracter = false;
                         idSegundoNo = stoi(segundoVertice);
                         segundoVertice = "";
-                        cout<<"Segundo caracter"<<idSegundoNo<<endl;
+                       // cout<<"Segundo caracter"<<idSegundoNo<<endl;
                         add_edge(idPrimeiroNo,idSegundoNo);
+                  //  cout<<"<edge source=\""<<idPrimeiroNo<<"\""<<" "<<"target=\""<<idSegundoNo<<"\"/>"<<endl;
                         add_edge(idSegundoNo,idPrimeiroNo);
                         continue;
                     }
@@ -128,13 +129,13 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
     }
     cout<<"Numero de subgrafos: "<<numeroSubGrafos<<endl;
     cout<<"vertices"<<vertices<<endl;
-    //cout<<"Pesos dos vertices"<<pesosVertices<<endl;
-    cout<<"Arestas Conectadas"<<arestasConectados<<endl;
+   // cout<<"Pesos dos vertices"<<pesosVertices<<endl;
+   // cout<<"Arestas Conectadas"<<arestasConectados<<endl;
     cout << "Terminou de ler \n";
     this->raio = infinito;
     this->diametro = 0;
    // print_graph();
-    vector<Edge*> vetor = constructive_proc();
+    vector<Edge*> vetor = AlgoritmoGuloso();
 
 }
 
@@ -163,9 +164,9 @@ vector<Edge*> Graph::order_edges_non_decreasing_gap(){
                   [this](const Edge* e1, const Edge* e2) {
                       return compararArestas(e1, e2);  // Chama a função membro
                   }); 
-                  for(int i=0;i<retorno.size();i++){
+                //   for(int i=0;i<retorno.size();i++){
                 //    cout<<"aresta"<<retorno[i]->_source_id<<"-"<<retorno[i]->_target_id<<"custo:"<<search_for_node(retorno[i]->_source_id)->_weight- search_for_node(retorno[i]->_target_id)->_weight<<endl;
-                  }   
+                //   }   
                   return retorno;
 }
 
@@ -219,7 +220,7 @@ vector<Edge*> Graph::getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visi
 }
 
 // pagina 3 do paper
-vector<Edge*> Graph::constructive_proc(){
+vector<Edge*> Graph::AlgoritmoGuloso(){
         auto start = std::chrono::system_clock::now();
 
     vector<MGGPPAux> x;
@@ -234,24 +235,16 @@ vector<Edge*> Graph::constructive_proc(){
    
      MGGPPAux* m=  new MGGPPAux();
             x.push_back(*m);
-        /* code */
-    
-    
     while(x.size() <=p){ // padrão do algoritmo
-    //cout<<"entrou no while"<<endl;
         for(int i = 0; i < arestas.size(); i++){ // extract_first(E\X)
-        //cout<<"entrou no for"<<endl;
-            if(!aresta_no_vetorIdaVolta(x[contador].edges, arestas[i])){
+            if(!aresta_no_vetorIdaVolta(arestasDescobertas, arestas[i])){
                 escolhida = arestas[i];
-              //  cout<<"escolhida"<<escolhida->_source_id<<" "<<escolhida->_target_id<<"iteração do i"<<i;
+                cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
                 auto iterador = arestas.at(i);
                 arestas.erase(remove(arestas.begin(), arestas.end(), arestas[i]), arestas.end()); // remove a aresta que a gente pegou
                  break;
             }
         }
-        //cout<<"saiu do for"<<endl;
-                 //  cout<<"total gap"<<total_gap<<endl;
-                 //  cout<<"x.size"<<x.size()<<"p"<<p<<endl;
         if(!arestas_adj(arestasDescobertas, escolhida)){ // se a escolhida nao é adjacente a ngm que ta em X
             Node* source = search_for_node(escolhida->_source_id);
                 vertices_descobertos.push_back(source);          
@@ -260,9 +253,11 @@ vector<Edge*> Graph::constructive_proc(){
             MGGPPAux* m=  new MGGPPAux();
             x.push_back(*m);                      
             x[contador].edges.push_back(escolhida);
-            x[contador].gap=determinar_gap_aresta(escolhida);
-            x[contador].maxvalue = max(search_for_node(escolhida->_source_id)->_weight,search_for_node(escolhida->_target_id)->_weight);
-            x[contador].minvalue = min(search_for_node(escolhida->_source_id)->_weight,search_for_node(escolhida->_target_id)->_weight);
+            size_t currentMaxValue = max(source->_weight,target->_weight);
+            x[contador].maxvalue = currentMaxValue;
+            size_t currentMinValue = min(source->_weight,target->_weight);
+            x[contador].minvalue = currentMinValue;
+            x[contador].gap= x[contador].maxvalue- x[contador].minvalue;
             contador++;
             arestasDescobertas.push_back(escolhida);
             total_gap += determinar_gap_aresta(escolhida);
@@ -272,29 +267,37 @@ vector<Edge*> Graph::constructive_proc(){
     // for(int i=0;i<vertices_descobertos.size();i++){
     //     cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
     // }
-  //1 entre valores, 2 maior que o maximo menor que o minimo, 3 maior que o maximo maior que o minimo,4 menor que o maximo menor que o mínimo
     while (vertices_descobertos.size() < this->_number_of_nodes){
       //  cout<<"Processando vertice numero:"<<vertices_descobertos.size()<<endl;
           Edge* melhor;
     int posMelhor=0;
     int custoAdicionalMelhor=infinito;
    // cout<<"verticesdescobertos"<<vertices_descobertos.size()<<"numeroDeNos"<<this->_number_of_nodes;
-
+int tipo=0;
+int tipoMelhor=0;
             for(int i=0;i<x.size();i++){
-        for ( Edge* e : getCutEdges(x[i].edges, arestasDescobertas)) {
+                vector<Edge*> ArestasCortadas = getCutEdges(x[i].edges, arestasDescobertas);
+        for ( Edge* e : ArestasCortadas) {
             int custoAdicionalCorrente=infinito;
-            size_t custoMaximoCorrente=max(search_for_node(e->_source_id)->_weight,search_for_node(e->_target_id)->_weight);
-            size_t custoMinimoCorrente=min(search_for_node(e->_source_id)->_weight,search_for_node(e->_target_id)->_weight);
+           auto source_node = search_for_node(e->_source_id);
+auto target_node = search_for_node(e->_target_id);
+size_t custoMaximoCorrente = max(source_node->_weight, target_node->_weight);
+size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
+
           //  cout<<"aresta"<<e->_source_id<<"-"<<e->_target_id<<"custo Adicional mellhor"<<custoAdicionalMelhor<<endl;
           //custoAdicionalCorrente = max(custoMaximoCorrente,x[i].maxvalue)-min(custoMinimoCorrente,x[i].minvalue);
              if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
-                custoAdicionalCorrente=0;//fazer um modo de quebrar aqui pois ja é a melhor opção possível
+                tipo=1;
+                custoAdicionalCorrente=x[i].maxvalue-x[i].minvalue;//fazer um modo de quebrar aqui pois ja é a melhor opção possível
              }else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
                 custoAdicionalCorrente =  custoMaximoCorrente-custoMinimoCorrente;
+            tipo=2;
              }
              else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
+                tipo=3;
                 custoAdicionalCorrente = custoMaximoCorrente-x[i].minvalue;
              }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
+                tipo=4;
             custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
              }else{
                 cout<<"caiu no else";
@@ -304,37 +307,45 @@ vector<Edge*> Graph::constructive_proc(){
             //    cout<<"custoAdicionalMelhor"<<custoAdicionalMelhor<<"custoAdicionalCorrente";
             //     cout<<"teste"<<"custo maximo corrente:"<<custoMaximoCorrente<<"-"<<custoMinimoCorrente;
             //    cout<<"custo Adicional Corrente:"<<custoAdicionalCorrente<<"custo adicional melhor"<<custoAdicionalMelhor;
-            //  }
+            //  
+         //cout<<"custo adicional:"<<custoAdicionalCorrente<<endl;
+            //cout<<"tamanho arestas"<<ArestasCortadas.size()<<"tamanho arestas conhecidas"<<arestasDescobertas.size();
              if(custoAdicionalMelhor>custoAdicionalCorrente){
                 custoAdicionalMelhor=custoAdicionalCorrente;
                 posMelhor =i;
                 melhor =e;
-              //  cout<<"melhor definido"<<melhor->_source_id<<"-"<<melhor->_target_id<<"custo"<<custoAdicionalMelhor<<endl;
+                tipoMelhor=tipo;
+                if(tipo==1){break;}
+                 //   cout<<"custo minimo"<<custoMaximoCorrente-custoMinimoCorrente<<"custo maximo:"<<custoMaximoCorrente<<"custo minimo:"<<custoMinimoCorrente;
+                
+              //  cout<<"melhor definido"<<melhor->_source_id<<"-"<<melhor->_target_id<<"custo"<<custoAdicionalMelhor<<"para o subespaco:"<<1<<endl;
              }
             }
          // cout<<"e:"<<e->_source_id<<"-"<<e->_target_id;
         }
+
+       // cout<<"melhor final:"<<melhor->_source_id<<"-"<<melhor->_target_id<<"subespaco:"<<posMelhor<<"Custo adicional:"<<custoAdicionalMelhor<<"tipo"<<tipoMelhor<<endl;
+           Node* source = search_for_node(melhor->_source_id);
         Node* target = search_for_node(melhor->_target_id);
-        Node* source = search_for_node(melhor->_source_id);
-     //   cout<<"melhor:"<<melhor->_source_id<<"-"<<melhor->_target_id;
-        if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
-             size_t custoMaximoMelhor=max(search_for_node(melhor->_source_id)->_weight,search_for_node(melhor->_target_id)->_weight);
-            size_t custoMinimoMelhor=min(search_for_node(melhor->_source_id)->_weight,search_for_node(melhor->_target_id)->_weight);
+         if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
+        size_t custoMaximoMelhor = max(source->_weight, target->_weight);
+            size_t custoMinimoMelhor = min(source->_weight, target->_weight);
+           // cout<<"Peso 1:"<<source->_weight<<"Peso 2:"<<target->_weight<<"minimo"<<min(source->_weight, target->_weight)<<"Valor atual no min:"<<x[posMelhor].minvalue<<endl;
             x[posMelhor].edges.push_back(melhor);
             x[posMelhor].maxvalue  = max(custoMaximoMelhor,x[posMelhor].maxvalue);
-             x[posMelhor].minvalue  = min(custoMinimoMelhor,x[posMelhor].maxvalue);
-             x[posMelhor].gap = max(custoMaximoMelhor,x[posMelhor].maxvalue)- min(custoMinimoMelhor,x[posMelhor].maxvalue);
-        }
-                if (!node_no_vetor(vertices_descobertos, source)){
-            vertices_descobertos.push_back(source);    }    
-               if (!node_no_vetor(vertices_descobertos, target)){
-            vertices_descobertos.push_back(target);
-                }
+             x[posMelhor].minvalue  = min(custoMinimoMelhor,x[posMelhor].minvalue);
+             x[posMelhor].gap = x[posMelhor].maxvalue- x[posMelhor].minvalue;
+        }              
             arestasDescobertas.push_back(melhor);
-        //cout<<"vertice"<<source->_id;
-        //cout<<"vertice"<<target->_id;
+                if (!node_no_vetor(vertices_descobertos, source))
+                {
+            vertices_descobertos.push_back(source);
+                }    
+               if (!node_no_vetor(vertices_descobertos, target))
+               {
+            vertices_descobertos.push_back(target);
 
-            //cout<<"gap"<<total_gap;x
+                }
         }
             auto end = std::chrono::system_clock::now();
               std::chrono::duration<double> elapsed_seconds = end-start;
@@ -350,12 +361,35 @@ vector<Edge*> Graph::constructive_proc(){
     //     cout<<"x:"<<abs(search_for_node(x[i]->_source_id)->_weight-search_for_node(x[i]->_target_id)->_weight)<<endl;
     // }
     // for(int i=0;i<vertices_descobertos.size();i++){
-    //     cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
+    //     //cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
+
     // }
+    vector<size_t> nodesJaImpressos;
+    string color[5] = {"blue","green","yellow","magenta","red"};
     for(int i =0;i<x.size();i++){
-        cout<<"subespaco:"<<i<<endl;
+        // cout<<"subespaco:"<<i<<endl;
+        // cout<<"valor máximo:"<<x[i].maxvalue<<endl;
+        // cout<<"valor mínimo"<<x[i].minvalue<<endl;
+        // cout<<"gap:"<<x[i].gap<<endl;
         for(int j=0;j<x[i].edges.size();j++){
-            cout<<" contem o edge"<<x[i].edges[j]->_source_id<<"-"<<x[i].edges[j]->_target_id<<endl;
+            if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_target_id)){
+
+            
+            //   cout<<"<node id=\""<<x[i].edges[j]->_target_id<<"\">"<<endl;
+            //  cout<<"<data key=\"d0\">"<<color[i]<<"</data>"<<endl;
+            //  cout<<"    </node>"<<endl;
+            //  nodesJaImpressos.push_back(x[i].edges[j]->_target_id);
+            //  }if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_source_id)){
+
+            //   cout<<"<node id=\""<<x[i].edges[j]->_source_id<<"\">"<<endl;
+            //  cout<<"<data key=\"d0\">"<<color[i]<<"</data>"<<endl;
+            //  cout<<"    </node>"<<endl;
+            //               nodesJaImpressos.push_back(x[i].edges[j]->_source_id);
+
+             }
+        //   cout<<" contem o edge"<<x[i].edges[j]->_source_id<<"-"<<x[i].edges[j]->_target_id<<endl;
+        cout<<"<edge source=\""<<x[i].edges[j]->_source_id<<"\""<<" "<<"target=\""<<x[i].edges[j]->_target_id<<"\"/>"<<endl;
+
         }
     }
     cout<<"Gap final encontrado:"<<gapFinal<<endl;
@@ -364,34 +398,9 @@ vector<Edge*> Graph::constructive_proc(){
 
     return x[0].edges;
 }
-void Graph::AlgoritmoGuloso()
-{
-    vector<Edge> X;  // Conjunto X de arestas
-    set<size_t> coveredVertices; // Vértices cobertos por X
-    int p = 3; 
-    Edge* e= new Edge();
-    while(e->_next_edge!=nullptr){
-
-     
-        if(X.size()>p) break;
-        for (int coveredVertice:coveredVertices)
-        {
-            /* code */
-            if(!isAdjacent(e->_source_id,coveredVertice)){
-                X.push_back(*e);
-                coveredVertices.insert(e->_source_id);
-                coveredVertices.insert(e->_target_id);
-        
-            }
-        }
-    }
-    
-    while(coveredVertices.size()<this->_number_of_nodes){
-        
-    }
 
     
-}
+
 size_t gap(size_t weightOne,size_t weightTwo){
     if(weightOne>=weightTwo){
         return weightOne-weightTwo;
