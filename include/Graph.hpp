@@ -73,6 +73,7 @@ public:
     void lista_adjacencia(ofstream& arquivo_saida);
 
     vector<Edge*>  AlgoritmoGuloso();
+    vector<Edge*> AlgoritmoGulosoRandomizado(float alfa);
     bool isAdjacent(size_t first_id,size_t second_id);
 bool aresta_no_vetorIdaVolta(vector<Edge*>& vetor, Edge* aresta);
 
