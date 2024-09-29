@@ -74,6 +74,7 @@ public:
 
     vector<Edge*>  AlgoritmoGuloso();
     vector<Edge*> AlgoritmoGulosoRandomizado(float alfa);
+    vector<Edge*> AlgoritmoGulosoRandomizadoAdaptativo(float alfa[],int numeroIteracoes,int bloco,int tamanho);
     bool isAdjacent(size_t first_id,size_t second_id);
 bool aresta_no_vetorIdaVolta(vector<Edge*>& vetor, Edge* aresta);
 
