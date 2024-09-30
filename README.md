@@ -1,10 +1,13 @@
 ## Trabalho de Grafos - Parte 2
 Repositório dedicado à segunda parte do trabalho da matéria Teoria dos Grafos - DCC059 - da UFJF em 2024.1.
-Grupo:
-    Davi Laranjo, Eduardo Salzer, Pablo Henrique, Pablo Pinheiro
+
+Grupo: Davi Laranjo, Eduardo Salzer, Pablo Henrique, Pablo Pinheiro
 
 ### Uso
 Para executar o código, clone o repositório e entre nele. Em seguida, use `make clean all` e `./graph_project <arquivo da instância do grafo>` `<algorítmo a ser usado (1, 2 ou 3)`
-`1: Algorítmo Guloso
+
+```
+1: Algorítmo Guloso
 2: Algorítmo Guloso Randomizado Adaptativo
-3: Algorítmo Guloso Randomizado Adaptativo Reativo`
+3: Algorítmo Guloso Randomizado Adaptativo Reativo
+``` 
