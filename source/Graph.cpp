@@ -143,7 +143,7 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
     if(opt == 1){
         vector<Edge*> vetor = AlgoritmoGuloso();
     } else if(opt == 2){
-        vector<Edge*> vetor2 = AlgoritmoGulosoRandomizado(alfarand);
+        vector<Edge*> vetor2 = AlgoritmoGulosoRandomizado(0.2);
     } else {
         vector<Edge*> vetor2 = AlgoritmoGulosoRandomizadoAdaptativo(alfa,100,25,tamanho);
     }

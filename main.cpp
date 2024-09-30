@@ -8,7 +8,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){    
     // Lê o arquivo.
-    if (argc != 4){
+    if (argc != 3){
         cout << "Uso incorreto. Siga o padrão: ./graph_project <arquivo do grafo> <1, 2 ou 3 (1 para algoritmo GULOSO, 2 para RANDOMIZADO e 3 para REATIVO)>\n";
         return 0;
     }
@@ -22,8 +22,8 @@ int main(int argc, char* argv[]){
         return 0;
     }
     string optstr = argv[2];
-    string alfar = argv[3];
-    float al = stof(alfar);
+    //string alfar = argv[3];
+    //float al = stof(alfar);
     int opt = stoi(optstr);
     
     if (opt > 3 || opt < 1){
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-    Graph *grafo = new Graph(arquivo_entrada, false, false, true, opt, al);
+    Graph *grafo = new Graph(arquivo_entrada, false, false, true, opt,0.2);
     
 
     arquivo_entrada.close();
