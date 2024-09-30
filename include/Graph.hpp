@@ -14,7 +14,7 @@ class Graph
 public:
     /*Assinatura dos métodos básicos para o funcionamento da classe*/
 
-    Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes);
+    Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes, int opt);
     Graph();
     ~Graph();
 
@@ -75,13 +75,14 @@ public:
     vector<Edge*>  AlgoritmoGuloso();
     vector<Edge*> AlgoritmoGulosoRandomizado(float alfa);
     vector<Edge*> AlgoritmoGulosoRandomizadoAdaptativo(float alfa[],int numeroIteracoes,int bloco,int tamanho);
+
     bool isAdjacent(size_t first_id,size_t second_id);
-bool aresta_no_vetorIdaVolta(vector<Edge*>& vetor, Edge* aresta);
+    bool aresta_no_vetorIdaVolta(vector<Edge*>& vetor, Edge* aresta);
 
     int determinar_gap_aresta(Edge* aresta);
     bool compararArestas(const Edge* a, const Edge* b);
     bool arestas_adj(vector<Edge*> arestas, Edge* alvo);
-vector<Edge*>getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visitedEdges) ;
+    vector<Edge*>getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visitedEdges) ;
 private:
     size_t _number_of_nodes;
     size_t _number_of_edges; 

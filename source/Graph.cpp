@@ -18,12 +18,12 @@
 #include <random>
 
 using namespace std;
-Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes){
+Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes, int opt){
     // Pega a primeira linha e joga pra tamanhoInstância (a 1° linha é o tamanho da instancia do grafo, check README.txt)
     // cout << "Inicio do construtor\n";
     string name; // temporario pra ser usado na função getline()
     getline(instance, name);
-    cout<<"name"<<name;
+    // cout<<"name"<<name;
     // pega o tamanho da instancia em inteiro
    // this->_number_of_nodes = stoi(temp); // stoi = string to int
     
@@ -44,7 +44,7 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
     bool parametroPesosVertices=false;
     bool parametroArestaConectado = false;
 
-    cout << "Começando a ler arquivo.\n";
+    // cout << "Começando a ler arquivo.\n";
     while (getline(instance, linha)){ // le cada linha
         stringstream ss(linha);
         if(linha.find("param p :=")!=string::npos){
@@ -81,7 +81,7 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
             if(linha.find(";")!=string::npos){
                 parametroPesosVertices = false;
             }else{
-                cout<<"vertice:"<<linha.substr(0,3)<<" de peso: "<<linha.substr(5,3)<<endl;
+                // cout<<"vertice:"<<linha.substr(0,3)<<" de peso: "<<linha.substr(5,3)<<endl;
                 add_node(stoi(linha.substr(0,3)),stoi(linha.substr(5,3)));
                 pesosVertices+=linha+"\n";
             }
@@ -129,20 +129,25 @@ Graph::Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool wei
             }
         }
     }
-    cout<<"Numero de subgrafos: "<<numeroSubGrafos<<endl;
-    cout<<"vertices"<<vertices<<endl;
+    // cout<<"Numero de subgrafos: "<<numeroSubGrafos<<endl;
+    // cout<<"vertices"<<vertices<<endl;
    // cout<<"Pesos dos vertices"<<pesosVertices<<endl;
    // cout<<"Arestas Conectadas"<<arestasConectados<<endl;
-    cout << "Terminou de ler \n";
+    // cout << "Terminou de ler \n";
     this->raio = infinito;
     this->diametro = 0;
    // print_graph();
-   // vector<Edge*> vetor = AlgoritmoGuloso();
-    //vector<Edge*> vetor2 = AlgoritmoGulosoRandomizado(0.2);
-    float alfa[4] = {0.2,0.4,0.6,0.8};
+    float alfa[4] = {0.1, 0.2, 0.4, 0.6};
     int tamanho = sizeof(alfa)/ sizeof(alfa[0]);
-    cout<<"tamanho alfa"<<tamanho;
-vector<Edge*> vetor2 = AlgoritmoGulosoRandomizadoAdaptativo(alfa,100,25,tamanho);
+    // cout<<"tamanho alfa"<<tamanho;
+    
+    if(opt == 1){
+        vector<Edge*> vetor = AlgoritmoGuloso();
+    } else if (opt == 2){
+        vector<Edge*> vetor2 = AlgoritmoGulosoRandomizado(0.1);
+    } else {
+        vector<Edge*> vetor2 = AlgoritmoGulosoRandomizadoAdaptativo(alfa,100,25,tamanho);
+    }
 }
 
 // usado para ordenação
@@ -154,7 +159,7 @@ bool Graph::compararArestas(const Edge* a, const Edge* b) { // compara duas ares
 
 vector<Edge*> Graph::order_edges_non_decreasing_gap(){
     vector<Edge*> retorno;
-      Node* traversal=this->_first;
+    Node* traversal=this->_first;
     Edge* edgeTraversal = traversal->_first_edge;
     while(traversal!=nullptr){
         edgeTraversal = traversal->_first_edge;
@@ -192,24 +197,27 @@ bool Graph::arestas_adj(vector<Edge*> arestas, Edge* alvo){
     }
     return false;
 }
+
+std::vector<Edge*> cutEdges;
 vector<Edge*> Graph::getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visitedEdges) {
-    std::vector<Edge*> cutEdges;
- 
+    
     for (const auto& edge : _MGGPPAuxEdges) {
         Node* source = search_for_node(edge->_source_id);
         Edge* sourceEdge = source->_first_edge;
         while(sourceEdge!=nullptr){
-            if(!aresta_no_vetorIdaVolta(cutEdges,sourceEdge)&&!aresta_no_vetorIdaVolta(_MGGPPAuxEdges,sourceEdge)&&!aresta_no_vetorIdaVolta(visitedEdges,sourceEdge)){
+            if(!aresta_no_vetorIdaVolta(cutEdges, sourceEdge) && !aresta_no_vetorIdaVolta(_MGGPPAuxEdges,sourceEdge)&&!aresta_no_vetorIdaVolta(visitedEdges,sourceEdge)){
                 cutEdges.push_back(sourceEdge);
+                sourceEdge->inCutEdges = true;
           //      cout<<"adicionado edge:"<<sourceEdge->_source_id<<"-"<<sourceEdge->_target_id<<endl;
             }
             sourceEdge=sourceEdge->_next_edge;
         } 
-          Node* target = search_for_node(edge->_target_id);
-         Edge* targetEdge = target->_first_edge;
+        Node* target = search_for_node(edge->_target_id);
+        Edge* targetEdge = target->_first_edge;
         while(targetEdge!=nullptr){
-            if(!aresta_no_vetorIdaVolta(cutEdges,targetEdge)&&!aresta_no_vetorIdaVolta(_MGGPPAuxEdges,targetEdge)&&!aresta_no_vetorIdaVolta(visitedEdges,targetEdge)){
+            if(targetEdge->inCutEdges == false &&!aresta_no_vetorIdaVolta(_MGGPPAuxEdges,targetEdge)&&!aresta_no_vetorIdaVolta(visitedEdges,targetEdge)){
                 cutEdges.push_back(targetEdge);
+                targetEdge->inCutEdges = true;
             //    cout<<"adicionado edge:"<<targetEdge->_source_id<<"-"<<targetEdge->_target_id<<endl;
 
             }
@@ -224,11 +232,12 @@ vector<Edge*> Graph::getCutEdges(vector<Edge*> _MGGPPAuxEdges,vector<Edge*> visi
 
     return cutEdges;
 }
+
 int EscolheAlfa(float probabilidades[],int tamanho){
-        std::random_device rd;
+    std::random_device rd;
     std::mt19937 gen(rd());
-float total =0;
- for (int i = 0; i < tamanho; i++) {
+    float total =0;
+    for (int i = 0; i < tamanho; i++) {
         total += probabilidades[i];
     }
     // Define uma distribuição uniforme para gerar números de ponto flutuante entre 0.0 e 1.0
@@ -237,50 +246,50 @@ float total =0;
     // Gera um número aleatório entre 0 e 1
     double randomNumber = distrib(gen);
     float soma=0;
-     for (int i = 0; i < tamanho; i++) {
+    for (int i = 0; i < tamanho; i++) {
         soma += probabilidades[i];
         if (randomNumber <= soma) {
             return i;
         }
     }
-    cout<<"nao achou alfa";
+    // cout<<"nao achou alfa";
     //return 6;
 }
 
 vector<Edge*> Graph::AlgoritmoGulosoRandomizadoAdaptativo(float alfaVetor[],int numeroIteracoes,int bloco,int tamanho){
- auto start = std::chrono::system_clock::now();
-  vector<MGGPPAux> melhorSolucao;
-  int valorMelhorSolução=infinito;
-  int contadorLoop =0;
-  float alfaEscolhido;
-  float probabilidades[tamanho];
-  float medias[tamanho];
-   float alfa;
-   int indexAlfa;
-   int contadoresMedias[tamanho];
+    auto start = std::chrono::system_clock::now();
+    vector<MGGPPAux> melhorSolucao;
+    int valorMelhorSolução=infinito;
+    int contadorLoop =0;
+    float alfaEscolhido;
+    float probabilidades[tamanho];
+    float medias[tamanho];
+    float alfa;
+    int indexAlfa;
+    int contadoresMedias[tamanho];
 // cout<<"teste";
-while(contadorLoop<numeroIteracoes){
-    if(contadorLoop%bloco==0){
-        if(contadorLoop==0){
-            for (size_t i = 0; i <tamanho; i++)
-            {
-               probabilidades[i] = 1.0/tamanho;
-               medias[i] =0;
-               contadoresMedias[i]=0;
-               cout<<"probabilidade:"<<probabilidades[i]<<"size"<<tamanho;
-            }           
-        }else{
-            for (size_t i = 0; i < tamanho; i++)
-            {
-                cout<<"valor melhor solução:"<<valorMelhorSolução<<"media"<<medias[i]<<"tamanho"<<tamanho;
-               probabilidades[i] = ((float)valorMelhorSolução/medias[i])/(float)tamanho;
-                cout<<"probabilidade:"<<probabilidades[i]<<"size"<<tamanho;
+    while(contadorLoop<numeroIteracoes){
+        if(contadorLoop%bloco==0){
+            if(contadorLoop==0){
+                for (size_t i = 0; i <tamanho; i++)
+                {
+                probabilidades[i] = 1.0/tamanho;
+                medias[i] =0;
+                contadoresMedias[i]=0;
+                // cout<<"probabilidade:"<<probabilidades[i]<<"size"<<tamanho;
+                }           
+            }else{
+                for (size_t i = 0; i < tamanho; i++)
+                {
+                    // cout<<"valor melhor solução:"<<valorMelhorSolução<<"media"<<medias[i]<<"tamanho"<<tamanho;
+                probabilidades[i] = ((float)valorMelhorSolução/medias[i])/(float)tamanho;
+                    // cout<<"probabilidade:"<<probabilidades[i]<<"size"<<tamanho;
 
-            }    
+                }    
             }
     }
     // cout<<"teste2";
-contadorLoop++;
+    contadorLoop++;
 
     vector<MGGPPAux> x;
     vector<Edge*> arestasDescobertas;
@@ -293,18 +302,18 @@ contadorLoop++;
     // cout<<"testea";
     indexAlfa = EscolheAlfa(probabilidades,tamanho);
     // cout<<"testeb";
-     alfa =alfaVetor[indexAlfa];
-    cout<<"fez config inicial"<<endl;
-     MGGPPAux* m=  new MGGPPAux();
-            x.push_back(*m);
+    alfa =alfaVetor[indexAlfa];
+    // cout<<"fez config inicial"<<endl;
+    MGGPPAux* m = new MGGPPAux();
+    x.push_back(*m);
     while(x.size() <=p){ // padrão do algoritmo
         for(int i = 0; i < arestas.size(); i++){ // extract_first(E\X)
             if(!aresta_no_vetorIdaVolta(arestasDescobertas, arestas[i])){
                 escolhida = arestas[i];
-                cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
+                // cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
                 auto iterador = arestas.at(i);
                 arestas.erase(remove(arestas.begin(), arestas.end(), arestas[i]), arestas.end()); // remove a aresta que a gente pegou
-                 break;
+                break;
             }
         }
         if(!arestas_adj(arestasDescobertas, escolhida)){ // se a escolhida nao é adjacente a ngm que ta em X
@@ -327,101 +336,102 @@ contadorLoop++;
     }
     x.pop_back();
     while (vertices_descobertos.size() < this->_number_of_nodes){
-vector<Candidato*> Candidatos;
-            for(int i=0;i<x.size();i++){
-                vector<Edge*> ArestasCortadas = getCutEdges(x[i].edges, arestasDescobertas);
-        for ( Edge* e : ArestasCortadas) {
-            int custoAdicionalCorrente=infinito;
-           auto source_node = search_for_node(e->_source_id);
-auto target_node = search_for_node(e->_target_id);
-size_t custoMaximoCorrente = max(source_node->_weight, target_node->_weight);
-size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
+    vector<Candidato*> Candidatos;
+    for(int i=0;i<x.size();i++){
+        vector<Edge*> ArestasCortadas = getCutEdges(x[i].edges, arestasDescobertas);
+    for ( Edge* e : ArestasCortadas) {
+        int custoAdicionalCorrente=infinito;
+        auto source_node = search_for_node(e->_source_id);
+        auto target_node = search_for_node(e->_target_id);
+        size_t custoMaximoCorrente = max(source_node->_weight, target_node->_weight);
+        size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
 
-             if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
+            if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
                 custoAdicionalCorrente=x[i].maxvalue-x[i].minvalue;//fazer um modo de quebrar aqui pois ja é a melhor opção possível
-             }else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
+            }else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
                 custoAdicionalCorrente =  custoMaximoCorrente-custoMinimoCorrente;
-             }
-             else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
+            }
+            else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
                 custoAdicionalCorrente = custoMaximoCorrente-x[i].minvalue;
-             }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
-            custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
-             }else{
-                cout<<"caiu no else";
-             }
-                Candidato* candidatoTemp = new Candidato();
-                candidatoTemp->posicao = i;
-                candidatoTemp->custoAdicional = custoAdicionalCorrente;
-                candidatoTemp->arestaCandidato = e;
-                Candidatos.push_back(candidatoTemp);
+            }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
+                custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
+            }else{
+            // cout<<"caiu no else";
+            }
+            Candidato* candidatoTemp = new Candidato();
+            candidatoTemp->posicao = i;
+            candidatoTemp->custoAdicional = custoAdicionalCorrente;
+            candidatoTemp->arestaCandidato = e;
+            Candidatos.push_back(candidatoTemp);
       
             }
          // cout<<"e:"<<e->_source_id<<"-"<<e->_target_id;
         }
         std::sort(Candidatos.begin(), Candidatos.end(), [](Candidato* a, Candidato* b) {
-    return a->custoAdicional < b->custoAdicional;
-});
-std::random_device rd;   // Gerador de números aleatórios para sementes
-    std::mt19937 gen(rd());  // Mersenne Twister como gerador de números
-    std::uniform_int_distribution<> distrib(0, floor( alfa*(Candidatos.size() - 1)));
-// cout<<"teste4";
-    // Selecionar um índice aleatório
-    int randomIndex = distrib(gen);
-auto melhor = Candidatos[randomIndex]->arestaCandidato;
-// cout<<"teste3";
-       // cout<<"melhor final:"<<melhor->_source_id<<"-"<<melhor->_target_id<<"subespaco:"<<posMelhor<<"Custo adicional:"<<custoAdicionalMelhor<<"tipo"<<tipoMelhor<<endl;
-           Node* source = search_for_node(melhor->_source_id);
+            return a->custoAdicional < b->custoAdicional;
+            });
+        std::random_device rd;   // Gerador de números aleatórios para sementes
+        std::mt19937 gen(rd());  // Mersenne Twister como gerador de números
+        std::uniform_int_distribution<> distrib(0, floor( alfa*(Candidatos.size() - 1)));
+    // cout<<"teste4";
+        // Selecionar um índice aleatório
+        int randomIndex = distrib(gen);
+        auto melhor = Candidatos[randomIndex]->arestaCandidato;
+    // cout<<"teste3";
+        // cout<<"melhor final:"<<melhor->_source_id<<"-"<<melhor->_target_id<<"subespaco:"<<posMelhor<<"Custo adicional:"<<custoAdicionalMelhor<<"tipo"<<tipoMelhor<<endl;
+        Node* source = search_for_node(melhor->_source_id);
         Node* target = search_for_node(melhor->_target_id);
-         if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
-        size_t custoMaximoMelhor = max(source->_weight, target->_weight);
+        if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
+            size_t custoMaximoMelhor = max(source->_weight, target->_weight);
             size_t custoMinimoMelhor = min(source->_weight, target->_weight);
-           // cout<<"Peso 1:"<<source->_weight<<"Peso 2:"<<target->_weight<<"minimo"<<min(source->_weight, target->_weight)<<"Valor atual no min:"<<x[posMelhor].minvalue<<endl;
+            // cout<<"Peso 1:"<<source->_weight<<"Peso 2:"<<target->_weight<<"minimo"<<min(source->_weight, target->_weight)<<"Valor atual no min:"<<x[posMelhor].minvalue<<endl;
             x[Candidatos[randomIndex]->posicao].edges.push_back(melhor);
             x[Candidatos[randomIndex]->posicao].maxvalue  = max(custoMaximoMelhor,x[Candidatos[randomIndex]->posicao].maxvalue);
-             x[Candidatos[randomIndex]->posicao].minvalue  = min(custoMinimoMelhor,x[Candidatos[randomIndex]->posicao].minvalue);
-             x[Candidatos[randomIndex]->posicao].gap = x[Candidatos[randomIndex]->posicao].maxvalue- x[Candidatos[randomIndex]->posicao].minvalue;
+            x[Candidatos[randomIndex]->posicao].minvalue  = min(custoMinimoMelhor,x[Candidatos[randomIndex]->posicao].minvalue);
+            x[Candidatos[randomIndex]->posicao].gap = x[Candidatos[randomIndex]->posicao].maxvalue- x[Candidatos[randomIndex]->posicao].minvalue;
         }              
-            arestasDescobertas.push_back(melhor);
-                if (!node_no_vetor(vertices_descobertos, source))
-                {
+        arestasDescobertas.push_back(melhor);
+        if (!node_no_vetor(vertices_descobertos, source))
+        {
             vertices_descobertos.push_back(source);
-                }    
-               if (!node_no_vetor(vertices_descobertos, target))
-               {
+        }    
+        if (!node_no_vetor(vertices_descobertos, target))
+        {
             vertices_descobertos.push_back(target);
 
-                }
         }
+    }
            
-        int gapFinal =0;
-        for (size_t i = 0; i < x.size(); i++)
-        {
-            gapFinal+=x[i].gap;
-           // cout<<"gap"<<x[i].gap<<endl;
-      }
-        medias[indexAlfa]=(medias[indexAlfa]*contadoresMedias[indexAlfa]+ gapFinal)/(contadoresMedias[indexAlfa]+1);
-        contadoresMedias[indexAlfa]++;
-        if(gapFinal<valorMelhorSolução){
-            valorMelhorSolução = gapFinal;
-            melhorSolucao = x;
-        }
-        
+    int gapFinal =0;
+    for (size_t i = 0; i < x.size(); i++)
+    {
+        gapFinal+=x[i].gap;
+        // cout<<"gap"<<x[i].gap<<endl;
+    }
+    medias[indexAlfa]=(medias[indexAlfa]*contadoresMedias[indexAlfa]+ gapFinal)/(contadoresMedias[indexAlfa]+1);
+    contadoresMedias[indexAlfa]++;
+    if(gapFinal<valorMelhorSolução){
+        valorMelhorSolução = gapFinal;
+        melhorSolucao = x;
+    }
+    
 
     cout<<"Gap final encontrado:"<<gapFinal<<endl;
-    cout<<x.size();
+    // cout<<x.size();
 }
- auto end = std::chrono::system_clock::now();
-              std::chrono::duration<double> elapsed_seconds = end-start;
-    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s";
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
     int melhorGapFinal=0;
     for (size_t i = 0; i < melhorSolucao.size(); i++)
         {
             melhorGapFinal+=melhorSolucao[i].gap;
            // cout<<"gap"<<x[i].gap<<endl;
       }
-    cout<<"Melhor gap encontrado:"<<melhorGapFinal<<"-"<<valorMelhorSolução;
+    cout<<"Melhor gap encontrado: "<<melhorGapFinal<<"-"<<valorMelhorSolução;
+    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s\n";
     return melhorSolucao[0].edges;
 }
+
 vector<Edge*> Graph::AlgoritmoGulosoRandomizado(float alfa){
    auto start = std::chrono::system_clock::now();
 
@@ -433,7 +443,7 @@ vector<Edge*> Graph::AlgoritmoGulosoRandomizado(float alfa){
     int p = this->numeroSubGrafos;
     Edge* escolhida;
     int contador=0;
-    cout<<"fez config inicial"<<endl;
+    // cout<<"fez config inicial"<<endl;
    
      MGGPPAux* m=  new MGGPPAux();
             x.push_back(*m);
@@ -441,7 +451,7 @@ vector<Edge*> Graph::AlgoritmoGulosoRandomizado(float alfa){
         for(int i = 0; i < arestas.size(); i++){ // extract_first(E\X)
             if(!aresta_no_vetorIdaVolta(arestasDescobertas, arestas[i])){
                 escolhida = arestas[i];
-                cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
+                // cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
                 auto iterador = arestas.at(i);
                 arestas.erase(remove(arestas.begin(), arestas.end(), arestas[i]), arestas.end()); // remove a aresta que a gente pegou
                  break;
@@ -495,7 +505,7 @@ size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
              }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
             custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
              }else{
-                cout<<"caiu no else";
+                // cout<<"caiu no else";
              }
             //    cout<<"max value:"<<x[i].maxvalue<<"min value"<<x[i].minvalue;
             //    cout<<"custoMaximoCorrente"<<custoMaximoCorrente<<"custoMinimoCorrente"<<custoMinimoCorrente;
@@ -525,19 +535,19 @@ std::random_device rd;   // Gerador de números aleatórios para sementes
 
     // Selecionar um índice aleatório
     int randomIndex = distrib(gen);
-auto melhor = Candidatos[randomIndex]->arestaCandidato;
+    auto melhor = Candidatos[randomIndex]->arestaCandidato;
 
        // cout<<"melhor final:"<<melhor->_source_id<<"-"<<melhor->_target_id<<"subespaco:"<<posMelhor<<"Custo adicional:"<<custoAdicionalMelhor<<"tipo"<<tipoMelhor<<endl;
-           Node* source = search_for_node(melhor->_source_id);
+        Node* source = search_for_node(melhor->_source_id);
         Node* target = search_for_node(melhor->_target_id);
-         if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
+        if(!node_no_vetor(vertices_descobertos, target) || !node_no_vetor(vertices_descobertos, source)){
         size_t custoMaximoMelhor = max(source->_weight, target->_weight);
             size_t custoMinimoMelhor = min(source->_weight, target->_weight);
            // cout<<"Peso 1:"<<source->_weight<<"Peso 2:"<<target->_weight<<"minimo"<<min(source->_weight, target->_weight)<<"Valor atual no min:"<<x[posMelhor].minvalue<<endl;
             x[Candidatos[randomIndex]->posicao].edges.push_back(melhor);
             x[Candidatos[randomIndex]->posicao].maxvalue  = max(custoMaximoMelhor,x[Candidatos[randomIndex]->posicao].maxvalue);
-             x[Candidatos[randomIndex]->posicao].minvalue  = min(custoMinimoMelhor,x[Candidatos[randomIndex]->posicao].minvalue);
-             x[Candidatos[randomIndex]->posicao].gap = x[Candidatos[randomIndex]->posicao].maxvalue- x[Candidatos[randomIndex]->posicao].minvalue;
+            x[Candidatos[randomIndex]->posicao].minvalue  = min(custoMinimoMelhor,x[Candidatos[randomIndex]->posicao].minvalue);
+            x[Candidatos[randomIndex]->posicao].gap = x[Candidatos[randomIndex]->posicao].maxvalue- x[Candidatos[randomIndex]->posicao].minvalue;
         }              
             arestasDescobertas.push_back(melhor);
                 if (!node_no_vetor(vertices_descobertos, source))
@@ -556,7 +566,7 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
         for (size_t i = 0; i < x.size(); i++)
         {
             gapFinal+=x[i].gap;
-            cout<<"gap"<<x[i].gap<<endl;
+            // cout<<"gap"<<x[i].gap<<endl;
       }
         
     
@@ -567,16 +577,18 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
     //     //cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
 
     // }
-    vector<size_t> nodesJaImpressos;
-    string color[5] = {"blue","green","yellow","magenta","red"};
-    for(int i =0;i<x.size();i++){
+
+    /* REPRESENTAÇÃO DO GRAFO */
+    // vector<size_t> nodesJaImpressos;
+    // string color[5] = {"blue","green","yellow","magenta","red"};
+    // for(int i =0;i<x.size();i++){
         // cout<<"subespaco:"<<i<<endl;
         // cout<<"valor máximo:"<<x[i].maxvalue<<endl;
         // cout<<"valor mínimo"<<x[i].minvalue<<endl;
         // cout<<"gap:"<<x[i].gap<<endl;
-        for(int j=0;j<x[i].edges.size();j++){
-            if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_target_id)){
 
+        // for(int j=0;j<x[i].edges.size();j++){
+        //     if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_target_id)){
             
             //   cout<<"<node id=\""<<x[i].edges[j]->_target_id<<"\">"<<endl;
             //  cout<<"<data key=\"d0\">"<<color[i]<<"</data>"<<endl;
@@ -589,15 +601,15 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
             //  cout<<"    </node>"<<endl;
             //               nodesJaImpressos.push_back(x[i].edges[j]->_source_id);
 
-             }
+            //  }
         //   cout<<" contem o edge"<<x[i].edges[j]->_source_id<<"-"<<x[i].edges[j]->_target_id<<endl;
-        cout<<"<edge source=\""<<x[i].edges[j]->_source_id<<"\""<<" "<<"target=\""<<x[i].edges[j]->_target_id<<"\"/>"<<endl;
+        // cout<<"<edge source=\""<<x[i].edges[j]->_source_id<<"\""<<" "<<"target=\""<<x[i].edges[j]->_target_id<<"\"/>"<<endl;
 
-        }
-    }
+        // }
+    // }
     cout<<"Gap final encontrado:"<<gapFinal<<endl;
-    cout<<x.size();
-    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s";
+    // cout<<x.size();
+    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s\n";
 
     return x[0].edges;
 }
@@ -605,8 +617,8 @@ auto melhor = Candidatos[randomIndex]->arestaCandidato;
 
 
 vector<Edge*> Graph::AlgoritmoGuloso(){
-        auto start = std::chrono::system_clock::now();
-
+    auto start = std::chrono::system_clock::now();
+    cout << "inicio";
     vector<MGGPPAux> x;
     vector<Edge*> arestasDescobertas;
     vector<Node*> vertices_descobertos;
@@ -615,7 +627,7 @@ vector<Edge*> Graph::AlgoritmoGuloso(){
     int p = this->numeroSubGrafos;
     Edge* escolhida;
     int contador=0;
-    cout<<"fez config inicial"<<endl;
+    // cout<<"fez config inicial"<<endl;
    
      MGGPPAux* m=  new MGGPPAux();
             x.push_back(*m);
@@ -623,7 +635,7 @@ vector<Edge*> Graph::AlgoritmoGuloso(){
         for(int i = 0; i < arestas.size(); i++){ // extract_first(E\X)
             if(!aresta_no_vetorIdaVolta(arestasDescobertas, arestas[i])){
                 escolhida = arestas[i];
-                cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
+                // cout<<"escolhida"<<escolhida->_source_id<<"- "<<escolhida->_target_id<<endl;
                 auto iterador = arestas.at(i);
                 arestas.erase(remove(arestas.begin(), arestas.end(), arestas[i]), arestas.end()); // remove a aresta que a gente pegou
                  break;
@@ -652,40 +664,40 @@ vector<Edge*> Graph::AlgoritmoGuloso(){
     //     cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
     // }
     while (vertices_descobertos.size() < this->_number_of_nodes){
-      //  cout<<"Processando vertice numero:"<<vertices_descobertos.size()<<endl;
+    //  cout<<"Processando vertice numero:"<<vertices_descobertos.size()<<endl;
           Edge* melhor;
     int posMelhor=0;
     int custoAdicionalMelhor=infinito;
    // cout<<"verticesdescobertos"<<vertices_descobertos.size()<<"numeroDeNos"<<this->_number_of_nodes;
-int tipo=0;
-int tipoMelhor=0;
-            for(int i=0;i<x.size();i++){
-                vector<Edge*> ArestasCortadas = getCutEdges(x[i].edges, arestasDescobertas);
+    int tipo=0;
+    int tipoMelhor=0;
+    for(int i=0;i<x.size();i++){
+        vector<Edge*> ArestasCortadas = getCutEdges(x[i].edges, arestasDescobertas);
         for ( Edge* e : ArestasCortadas) {
             int custoAdicionalCorrente=infinito;
-           auto source_node = search_for_node(e->_source_id);
-auto target_node = search_for_node(e->_target_id);
-size_t custoMaximoCorrente = max(source_node->_weight, target_node->_weight);
-size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
+            auto source_node = search_for_node(e->_source_id);
+            auto target_node = search_for_node(e->_target_id);
+            size_t custoMaximoCorrente = max(source_node->_weight, target_node->_weight);
+            size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
 
           //  cout<<"aresta"<<e->_source_id<<"-"<<e->_target_id<<"custo Adicional mellhor"<<custoAdicionalMelhor<<endl;
           //custoAdicionalCorrente = max(custoMaximoCorrente,x[i].maxvalue)-min(custoMinimoCorrente,x[i].minvalue);
-             if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
+            if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
                 tipo=1;
                 custoAdicionalCorrente=x[i].maxvalue-x[i].minvalue;//fazer um modo de quebrar aqui pois ja é a melhor opção possível
-             }else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
-                custoAdicionalCorrente =  custoMaximoCorrente-custoMinimoCorrente;
-            tipo=2;
-             }
-             else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
+            }else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
+                tipo=2;
+                custoAdicionalCorrente = custoMaximoCorrente-custoMinimoCorrente;
+            }
+            else if(x[i].maxvalue<=custoMaximoCorrente&&x[i].minvalue<=custoMinimoCorrente){
                 tipo=3;
                 custoAdicionalCorrente = custoMaximoCorrente-x[i].minvalue;
-             }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
+            }else if(x[i].maxvalue>=custoMaximoCorrente&&x[i].minvalue>=custoMinimoCorrente){
                 tipo=4;
-            custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
-             }else{
-                cout<<"caiu no else";
-             }
+                custoAdicionalCorrente = x[i].maxvalue-custoMinimoCorrente;
+            }else{
+                // cout<<"caiu no else";
+            }
             //    cout<<"max value:"<<x[i].maxvalue<<"min value"<<x[i].minvalue;
             //    cout<<"custoMaximoCorrente"<<custoMaximoCorrente<<"custoMinimoCorrente"<<custoMinimoCorrente;
             //    cout<<"custoAdicionalMelhor"<<custoAdicionalMelhor<<"custoAdicionalCorrente";
@@ -694,69 +706,58 @@ size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
             //  
          //cout<<"custo adicional:"<<custoAdicionalCorrente<<endl;
             //cout<<"tamanho arestas"<<ArestasCortadas.size()<<"tamanho arestas conhecidas"<<arestasDescobertas.size();
-             if(custoAdicionalMelhor>custoAdicionalCorrente){
-                custoAdicionalMelhor=custoAdicionalCorrente;
-                posMelhor =i;
-                melhor =e;
-                tipoMelhor=tipo;
+            if(custoAdicionalMelhor > custoAdicionalCorrente){
+                custoAdicionalMelhor = custoAdicionalCorrente;
+                posMelhor = i;
+                melhor = e;
+                tipoMelhor = tipo;
                 if(tipo==1){break;}
-                 //   cout<<"custo minimo"<<custoMaximoCorrente-custoMinimoCorrente<<"custo maximo:"<<custoMaximoCorrente<<"custo minimo:"<<custoMinimoCorrente;
+                //   cout<<"custo minimo"<<custoMaximoCorrente-custoMinimoCorrente<<"custo maximo:"<<custoMaximoCorrente<<"custo minimo:"<<custoMinimoCorrente;
                 
               //  cout<<"melhor definido"<<melhor->_source_id<<"-"<<melhor->_target_id<<"custo"<<custoAdicionalMelhor<<"para o subespaco:"<<1<<endl;
-             }
             }
-         // cout<<"e:"<<e->_source_id<<"-"<<e->_target_id;
         }
+         // cout<<"e:"<<e->_source_id<<"-"<<e->_target_id;
+    }
 
        // cout<<"melhor final:"<<melhor->_source_id<<"-"<<melhor->_target_id<<"subespaco:"<<posMelhor<<"Custo adicional:"<<custoAdicionalMelhor<<"tipo"<<tipoMelhor<<endl;
-           Node* source = search_for_node(melhor->_source_id);
+        Node* source = search_for_node(melhor->_source_id);
         Node* target = search_for_node(melhor->_target_id);
-         if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
-        size_t custoMaximoMelhor = max(source->_weight, target->_weight);
+        if(!node_no_vetor(vertices_descobertos, target) ||!node_no_vetor(vertices_descobertos, source)){
+            size_t custoMaximoMelhor = max(source->_weight, target->_weight);
             size_t custoMinimoMelhor = min(source->_weight, target->_weight);
            // cout<<"Peso 1:"<<source->_weight<<"Peso 2:"<<target->_weight<<"minimo"<<min(source->_weight, target->_weight)<<"Valor atual no min:"<<x[posMelhor].minvalue<<endl;
             x[posMelhor].edges.push_back(melhor);
             x[posMelhor].maxvalue  = max(custoMaximoMelhor,x[posMelhor].maxvalue);
-             x[posMelhor].minvalue  = min(custoMinimoMelhor,x[posMelhor].minvalue);
-             x[posMelhor].gap = x[posMelhor].maxvalue- x[posMelhor].minvalue;
+            x[posMelhor].minvalue  = min(custoMinimoMelhor,x[posMelhor].minvalue);
+            x[posMelhor].gap = x[posMelhor].maxvalue- x[posMelhor].minvalue;
         }              
-            arestasDescobertas.push_back(melhor);
-                if (!node_no_vetor(vertices_descobertos, source))
-                {
+        arestasDescobertas.push_back(melhor);
+        if (!node_no_vetor(vertices_descobertos, source))
+        {
             vertices_descobertos.push_back(source);
-                }    
-               if (!node_no_vetor(vertices_descobertos, target))
-               {
+        }    
+        if (!node_no_vetor(vertices_descobertos, target))
+        {
             vertices_descobertos.push_back(target);
-
-                }
         }
-            auto end = std::chrono::system_clock::now();
-              std::chrono::duration<double> elapsed_seconds = end-start;
+        }
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end-start;
         int gapFinal =0;
         for (size_t i = 0; i < x.size(); i++)
         {
             gapFinal+=x[i].gap;
-            cout<<"gap"<<x[i].gap<<endl;
-      }
+            // cout<<"gap"<<x[i].gap<<endl;
+        }
         
     
-    // for(int i=0;i<x.size();i++){
-    //     cout<<"x:"<<abs(search_for_node(x[i]->_source_id)->_weight-search_for_node(x[i]->_target_id)->_weight)<<endl;
-    // }
-    // for(int i=0;i<vertices_descobertos.size();i++){
-    //     //cout<<"vertice descoberto:"<<vertices_descobertos[i]->_id<<endl;
-
-    // }
-    vector<size_t> nodesJaImpressos;
-    string color[5] = {"blue","green","yellow","magenta","red"};
-    for(int i =0;i<x.size();i++){
-        // cout<<"subespaco:"<<i<<endl;
-        // cout<<"valor máximo:"<<x[i].maxvalue<<endl;
-        // cout<<"valor mínimo"<<x[i].minvalue<<endl;
-        // cout<<"gap:"<<x[i].gap<<endl;
-        for(int j=0;j<x[i].edges.size();j++){
-            if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_target_id)){
+    // REPRESENTAÇÃO DO GRAFO    
+    // vector<size_t> nodesJaImpressos;
+    // string color[5] = {"blue","green","yellow","magenta","red"};
+    // for(int i =0;i<x.size();i++){
+        // for(int j=0;j<x[i].edges.size();j++){
+            // if(!ta_no_vetor(nodesJaImpressos,x[i].edges[j]->_target_id)){
 
             
             //   cout<<"<node id=\""<<x[i].edges[j]->_target_id<<"\">"<<endl;
@@ -770,15 +771,15 @@ size_t custoMinimoCorrente = min(source_node->_weight, target_node->_weight);
             //  cout<<"    </node>"<<endl;
             //               nodesJaImpressos.push_back(x[i].edges[j]->_source_id);
 
-             }
+            //  }
         //   cout<<" contem o edge"<<x[i].edges[j]->_source_id<<"-"<<x[i].edges[j]->_target_id<<endl;
-        cout<<"<edge source=\""<<x[i].edges[j]->_source_id<<"\""<<" "<<"target=\""<<x[i].edges[j]->_target_id<<"\"/>"<<endl;
+        // cout<<"<edge source=\""<<x[i].edges[j]->_source_id<<"\""<<" "<<"target=\""<<x[i].edges[j]->_target_id<<"\"/>"<<endl;
 
-        }
-    }
+    //     }
+    // }
     cout<<"Gap final encontrado:"<<gapFinal<<endl;
-    cout<<x.size();
-    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s";
+    // cout<<x.size();
+    cout<<endl<< "elapsed time: " << elapsed_seconds.count() << "s\n";
 
     return x[0].edges;
 }
@@ -985,6 +986,8 @@ void Graph::add_edge(size_t node_id_1, size_t node_id_2, float weight, bool _gem
         No1->_first_edge->_weight = weight;
         No1->_first_edge->_target_id = node_id_2;
         No1->_first_edge->_gemea = _gemea;
+        No1->_first_edge->inCutEdges = false;
+
         No1->_number_of_edges++; // check me
         this->_number_of_edges++;
         //    cout<<"Criando primeira aresta do no"<<No1->_id<<endl;
@@ -1000,6 +1003,7 @@ void Graph::add_edge(size_t node_id_1, size_t node_id_2, float weight, bool _gem
         edgeTraversal->_next_edge->_weight = weight;
         edgeTraversal->_next_edge->_target_id = node_id_2;
         edgeTraversal->_next_edge->_gemea = _gemea;
+        edgeTraversal->_next_edge->inCutEdges = false;
         this->_number_of_edges++;
         No1->_number_of_edges++; // check me
 

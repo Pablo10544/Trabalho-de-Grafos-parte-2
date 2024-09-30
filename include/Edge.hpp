@@ -10,6 +10,9 @@ struct Edge
     size_t _source_id;
     size_t _target_id;
     bool _gemea; // indica que a aresta ja existe no sentido contrario (usada em grafos nao direcionados)
+    bool inCutEdges;
+    bool in_MGGPPAuxEdges;
+    bool in_visitedEdges;
 };
 
 #endif /* GRAFO_BASICO_EDGE_H */
