@@ -14,7 +14,7 @@ class Graph
 public:
     /*Assinatura dos métodos básicos para o funcionamento da classe*/
 
-    Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes);
+    Graph(ifstream& instance, bool direcionado, bool weighted_edges, bool weighted_nodes, int opt, float alfarand);
     Graph();
     ~Graph();
 

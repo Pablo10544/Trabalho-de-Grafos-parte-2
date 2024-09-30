@@ -6,48 +6,32 @@
 
 using namespace std;
 
-int menu() {
-    int selecao;
-    bool again;
-    do{
-        again = false;
-        cout << endl;
-        cout << "   ------  MENU ------" << endl;
-        cout << "[1] Fecho transitivo direto de um vertice" << endl; // ok 
-        cout << "[2] Fecho transitivo indireto de um vertice" << endl;  // ok
-        cout << "[3] Caminho minimo entre dois vertices - Dijkstra" << endl; // ok
-        cout << "[4] Caminho minimo entre dois vertices - Floyd" << endl; // ok
-        cout << "[5] Arvore Geradora Mínima de subgrafo vertice-induzido - Prim" << endl; // ok
-        cout << "[6] Arvore Geradora Mínima de subgrafo vertice-induzido - Kruskal" << endl; // ok 
-        cout << "[7] Arvore dada pela ordem do caminhamento em profundidade a partir de um vertice" << endl; // ok
-        cout << "[8] Raio, centro, diametro e periferia do grafo" << endl; // ok
-        cout << "[9] Conjunto de vertices de articulacao" << endl; // ok
-	cout << "[99] Salvar lista de adjacência do grafo no arquivo de saída" << endl; 
-        cout << "[0] Sair" << endl;
-        cout << "Escolha: ";
-        cin >> selecao;
-    }while(again);
-        if(!cin){
-            again = true;
-            cin.clear();
-            cin.ignore();
-        }
-        return selecao;
-    }
-
-
 int main(int argc, char* argv[]){    
     // Lê o arquivo.
+    if (argc != 4){
+        cout << "Uso incorreto. Siga o padrão: ./graph_project <arquivo do grafo> <1, 2 ou 3 (1 para algoritmo GULOSO, 2 para RANDOMIZADO e 3 para REATIVO)>\n";
+        return 0;
+    }
+    
     string nomeArquivoEntrada = argv[1];
-    cout << "Criando instancia do arquivo\n";
+    // cout << "Criando instancia do arquivo\n";
     ifstream arquivo_entrada(nomeArquivoEntrada);
     // Confere se o arquivo existe
     if (!arquivo_entrada){ 
         cout << "Arquivo não encontrado.\n" ;
         return 0;
     }
+    string optstr = argv[2];
+    string alfar = argv[3];
+    float al = stof(alfar);
+    int opt = stoi(optstr);
     
-    Graph *grafo = new Graph(arquivo_entrada, false, false, true);
+    if (opt > 3 || opt < 1){
+        cout << "Uso incorreto. O ultimo parametro deve estar entre 1 e 3\n";
+        return 0;
+    }
+
+    Graph *grafo = new Graph(arquivo_entrada, false, false, true, opt, al);
     
 
     arquivo_entrada.close();
