@@ -1,5 +1,5 @@
 ## Trabalho de Grafos - Parte 2
-Repositório dedicado à segunda parte do trabalho da matéria Teoria dos Grafos - DCC059 - da UFJF em 2024.1.
+Repositório dedicado à segunda parte do trabalho da matéria Teoria dos Grafos - DCC059 - da UFJF em 2024.1. Primeira parte do trabalho disponível [aqui](https://github.com/Pablo-henrique23/Trabalho-de-Grafos)
 
 Grupo: Davi Laranjo, Eduardo Salzer, Pablo Henrique, Pablo Pinheiro
 
